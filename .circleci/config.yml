@@ -64,7 +64,7 @@ jobs:
 
       - run:
           name: test
-          command: make testdeployment URL=${STAGING_URL}
+          command: make testdeployment URL=${STAGING_URL} VERSION=${CIRCLE_SHA1}
           
   deploy-test-production:
     docker:
@@ -85,7 +85,7 @@ jobs:
 
       - run:
           name: test
-          command: make testdeployment URL=${PRODUCTION_URL}
+          command: make testdeployment URL=${PRODUCTION_URL} VERSION=${CIRCLE_SHA1}
 
 # Invoke jobs via workflows
 # See: https://circleci.com/docs/configuration-reference/#workflows
