@@ -59,6 +59,16 @@ build:
 	zip lambda.zip index.py data.json template.html
 
 deploy:
+	# Determine environment based on the FUNCTION parameter
+	if echo "$(FUNCTION)" | grep -qE '.*-staging$$'; then \
+		ENVIRONMENT="STAGING"; \
+	elif echo "$(FUNCTION)" | grep -qE '.*-production$$'; then \
+		ENVIRONMENT="PRODUCTION"; \
+	else \
+		echo "Invalid function name. Please use the pattern 'application-name-staging' or 'application-name-production'."; \
+		exit 1; \
+	fi; \
+
 	aws sts get-caller-identity
 
 	aws lambda wait function-active \
@@ -66,7 +76,7 @@ deploy:
 
 	aws lambda update-function-configuration \
 		--function-name="$(FUNCTION)" \
-		--environment "Variables={PLATFORM=$(PLATFORM),VERSION=$(VERSION),BUILD_NUMBER=$(BUILD_NUMBER)}"
+		--environment "Variables={ENVIRONMENT=$(ENVIRONMENT),PLATFORM=$(PLATFORM),VERSION=$(VERSION),BUILD_NUMBER=$(BUILD_NUMBER)}"
 
 	aws lambda wait function-updated \
 		--function-name="$(FUNCTION)"
@@ -87,4 +97,3 @@ clean:
 all: clean lint black test build deploy
 
 .PHONY: test build deploy all clean
-
