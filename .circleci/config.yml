@@ -14,7 +14,7 @@ orbs:
 # Define a job to be invoked later in a workflow.
 # See: https://circleci.com/docs/configuration-reference/#jobs
 jobs:
-  ci: # This is the name of the job, feel free to change it to better match what you're trying to do!
+  integration: # This is the name of the job
     # These next lines defines a Docker executors: https://circleci.com/docs/executor-types/
     # You can specify an image from Dockerhub or use one of the convenience images from CircleCI's Developer Hub
     # A list of available CircleCI Docker convenience images are available here: https://circleci.com/developer/images/image/cimg/python
@@ -41,13 +41,51 @@ jobs:
       - run:
           name: check
           command: make check lint test
+  
+  deploy-test-staging:
+    docker:
+      - image: cimg/python:3.10.2
+    steps:
+      - checkout
+      - run:
+          name: install aws cli
+          command: pip install --quiet --upgrade awscli
 
       - run:
           name: build
           command: make clean build
-  
+
       - store_artifacts:
           path: ./lambda.zip
+
+      - run:
+          name: deploy
+          command: make deploy FUNCTION=${STAGING_FUNCTION_NAME} PLATFORM="CircleCI" VERSION=${CIRCLE_SHA1} BUILD_NUMBER=${CIRCLE_BUILD_NUM}
+
+      - run:
+          name: test
+          command: make testdeployment URL=${STAGING_URL}
+          
+  deploy-test-production:
+    docker:
+      - image: cimg/python:3.10.2
+    steps:
+      - checkout
+      - run:
+          name: install aws cli
+          command: pip install --quiet --upgrade awscli
+
+      - run:
+          name: build
+          command: make clean build
+
+      - run:
+          name: deploy
+          command: make deploy FUNCTION=${PRODUCTION_FUNCTION_NAME} PLATFORM="CircleCI" VERSION=${CIRCLE_SHA1} BUILD_NUMBER=${CIRCLE_BUILD_NUM}
+
+      - run:
+          name: test
+          command: make testdeployment URL=${PRODUCTION_URL}
 
 # Invoke jobs via workflows
 # See: https://circleci.com/docs/configuration-reference/#workflows
@@ -55,4 +93,10 @@ workflows:
   experimental-pipeline: # This is the name of the workflow, feel free to change it to better match your workflow.
     # Inside the workflow, you define the jobs you want to run.
     jobs:
-      - ci
+      - integration-delivery
+      - deploy-test-staging:
+          requires:
+            - integration
+      - deploy-test-production:
+          requires:
+            - deploy-test-staging
