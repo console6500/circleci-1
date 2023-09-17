@@ -74,9 +74,9 @@ deploy:
 	aws lambda wait function-active \
 		--function-name="$(FUNCTION)"
 
-	ENVIRONMENT=$(ENVIRONMENT) aws lambda update-function-configuration \
+	aws lambda update-function-configuration \
 		--function-name="$(FUNCTION)" \
-		--environment "Variables={PLATFORM=$(PLATFORM),VERSION=$(VERSION),BUILD_NUMBER=$(BUILD_NUMBER),ENVIRONMENT=$(ENVIRONMENT)}"
+		--environment "Variables={PLATFORM=$(PLATFORM),VERSION=$(VERSION),BUILD_NUMBER=$(BUILD_NUMBER),ENVIRONMENT=$$ENVIRONMENT}"
 
 	aws lambda wait function-updated \
 		--function-name="$(FUNCTION)"
