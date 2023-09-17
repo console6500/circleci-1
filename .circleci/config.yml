@@ -41,7 +41,9 @@ jobs:
       - run:
           name: build
           command: make clean build
-          
+  
+      - store_artifacts:
+          path: ./lambda.zip
 
 # Invoke jobs via workflows
 # See: https://circleci.com/docs/configuration-reference/#workflows
